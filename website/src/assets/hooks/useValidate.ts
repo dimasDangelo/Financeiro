@@ -1,18 +1,15 @@
-
 const useValidate = () => {
-
-  const validateInput = (valid) => {
-    
-    if(!valid) {
-        return <span>Campo obrigatório</span>;
+  const validateInput = (valid: boolean) => {
+    if (!valid) {
+      return "Campo obrigatório";
     }
+
     return null;
   };
-
 
   return {
     validateInput,
   };
 };
 
-export default useValidate
+export default useValidate;
