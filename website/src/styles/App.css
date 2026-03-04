@@ -1,0 +1,17 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.card {
+  padding: 2em;
+}
+
+input, select{
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
