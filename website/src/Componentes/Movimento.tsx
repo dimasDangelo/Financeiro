@@ -14,7 +14,11 @@ type Cartao = {
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:3001";
 
-export function Movimento() {
+type MovimentoProps = {
+  onSaved?: () => void;
+};
+
+export function Movimento({ onSaved }: MovimentoProps) {
   const [tipo, setTipo] = useState<TipoMovimento>("ENTRADA");
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("DEBITO");
   const [cartoes, setCartoes] = useState<Cartao[]>([]);
@@ -221,6 +225,7 @@ export function Movimento() {
 
       setMensagem("Movimento salvo com sucesso.");
       setInput({ descricao: "", valor: "", data: "", cartao: "", totalParcelas: "1" });
+      onSaved?.();
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Erro ao salvar movimento.");
     } finally {
@@ -230,8 +235,6 @@ export function Movimento() {
 
   return (
     <div className="movimento-container">
-      <h2>Movimento Financeiro</h2>
-
       {mensagem && <p className="feedback sucesso">{mensagem}</p>}
       {erro && <p className="feedback erro">{erro}</p>}
 
