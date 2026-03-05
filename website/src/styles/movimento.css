@@ -1,15 +1,13 @@
-.movimento-container {
-  max-width: 600px;
-  margin: auto;
-  padding: 16px;
-  background: #ffffff;
+input,
+select {
+  padding: 8px;
+  font-size: 14px;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d1d5db;
 }
 
-.movimento-container h2 {
-  text-align: center;
-  margin-bottom: 16px;
+.movimento-container {
+  width: 100%;
 }
 
 .grupo {
@@ -19,15 +17,10 @@
   margin-bottom: 12px;
 }
 
-.grupo label {
+.grupo label,
+.grupo span {
   font-weight: 600;
   margin-bottom: 4px;
-}
-
-.grupo input,
-.grupo select {
-  padding: 8px;
-  font-size: 14px;
 }
 
 .radio-group {
@@ -64,7 +57,7 @@
   background: #2563eb;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
 }
@@ -90,9 +83,13 @@
   background: #1d4ed8;
 }
 
-/* 📱 Mobile */
 @media (max-width: 480px) {
   .credito-box {
     grid-template-columns: 1fr;
+  }
+
+  .radio-group {
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }

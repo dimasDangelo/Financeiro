@@ -1,17 +1,151 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: #f3f4f6;
+}
+
+.dashboard-page {
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.card {
-  padding: 2em;
+.dashboard-header {
+  background: linear-gradient(120deg, #1d4ed8, #1e3a8a);
+  color: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-input, select{
-  padding: 4px;
-  font-size: 14px;
-  border-radius: 8px;
+.dashboard-header h1 {
+  margin: 0;
 }
 
+.dashboard-header p {
+  margin: 0.25rem 0 0;
+  opacity: 0.95;
+}
+
+.dashboard-cta {
+  width: auto;
+  min-width: 170px;
+  background: #16a34a;
+}
+
+.dashboard-filtros,
+.transacoes-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-filtros {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.resumo-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.resumo-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.resumo-card strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.entradas strong {
+  color: #166534;
+}
+
+.gastos strong {
+  color: #b91c1c;
+}
+
+.saldo strong {
+  color: #1e40af;
+}
+
+.transacoes-card h2 {
+  margin: 0 0 0.75rem;
+}
+
+.transacoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.transacao-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.transacao-item p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.transacao-item span {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.valor-entrada {
+  color: #15803d;
+}
+
+.valor-saida {
+  color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .resumo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transacao-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #root {
+    padding: 0.75rem;
+  }
+}
