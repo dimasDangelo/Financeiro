@@ -40,8 +40,11 @@ function App() {
   const [modalMovimentoOpen, setModalMovimentoOpen] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<AbaPainel>('lancamentos');
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const [mesSelecionado, setMesSelecionado] = useState(currentMonth);
+  const hoje = new Date();
+  const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+  const anoAtual = String(hoje.getFullYear());
+  const [mesSelecionado, setMesSelecionado] = useState(mesAtual);
+  const [anoSelecionado, setAnoSelecionado] = useState(anoAtual);
   const [cartaoSelecionado, setCartaoSelecionado] = useState('todos');
 
   const carregarTransacoes = async () => {
@@ -80,19 +83,36 @@ function App() {
     carregarTransacoes();
   }, []);
 
-  const opcoesMes = useMemo(() => {
-    const meses = new Set<string>([currentMonth]);
+  const opcoesMes = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const value = String(index + 1).padStart(2, '0');
+        const label = new Date(2000, index, 1).toLocaleDateString('pt-BR', { month: 'long' });
+        return {
+          value,
+          label: label.charAt(0).toUpperCase() + label.slice(1),
+        };
+      }),
+    []
+  );
 
+  const opcoesAno = useMemo(() => {
+    const anos = new Set<string>([anoAtual]);
     transacoes.forEach((transacao) => {
-      meses.add(transacao.data_movimento.slice(0, 7));
+      anos.add(transacao.data_movimento.slice(0, 4));
     });
 
-    return Array.from(meses).sort((a, b) => b.localeCompare(a));
-  }, [transacoes, currentMonth]);
+    return Array.from(anos).sort((a, b) => Number(b) - Number(a));
+  }, [transacoes, anoAtual]);
 
   const transacoesDoMes = useMemo(
-    () => transacoes.filter((transacao) => transacao.data_movimento.slice(0, 7) === mesSelecionado),
-    [transacoes, mesSelecionado]
+    () =>
+      transacoes.filter(
+        (transacao) =>
+          transacao.data_movimento.slice(0, 4) === anoSelecionado &&
+          transacao.data_movimento.slice(5, 7) === mesSelecionado
+      ),
+    [transacoes, anoSelecionado, mesSelecionado]
   );
 
   const resumo = useMemo(() => {
@@ -144,17 +164,34 @@ function App() {
       {erro && <p className="feedback erro">{erro}</p>}
 
       <section className="dashboard-filtros">
-        <label htmlFor="mes">Mês de referência</label>
-        <select id="mes" value={mesSelecionado} onChange={(e) => setMesSelecionado(e.target.value)}>
-          {opcoesMes.map((mes) => (
-            <option key={mes} value={mes}>
-              {new Date(`${mes}-01T00:00:00`).toLocaleDateString('pt-BR', {
-                month: 'long',
-                year: 'numeric',
-              })}
-            </option>
-          ))}
-        </select>
+        <div>
+          <p className="filtro-titulo">Referência</p>
+          <span className="filtro-subtitulo">Selecione o mês e o ano para análise</span>
+        </div>
+
+        <div className="filtro-referencia-grid">
+          <div className="filtro-campo">
+            <label htmlFor="mes">Mês</label>
+            <select id="mes" value={mesSelecionado} onChange={(e) => setMesSelecionado(e.target.value)}>
+              {opcoesMes.map((mes) => (
+                <option key={mes.value} value={mes.value}>
+                  {mes.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filtro-campo">
+            <label htmlFor="ano">Ano</label>
+            <select id="ano" value={anoSelecionado} onChange={(e) => setAnoSelecionado(e.target.value)}>
+              {opcoesAno.map((ano) => (
+                <option key={ano} value={ano}>
+                  {ano}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </section>
 
       <section className="resumo-grid">
