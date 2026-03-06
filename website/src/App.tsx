@@ -15,14 +15,20 @@ type Transacao = {
   data_movimento: string;
   forma_pagamento: 'DEBITO' | 'CREDITO';
   cartao_id: number | null;
+  total_parcelas: number;
+  numero_parcela: number | null;
 };
 
 type Cartao = {
   id: number;
   nome: string;
+  limite: number;
+  fechamento_dia: number;
+  vencimento_dia: number;
+  ativo: boolean;
 };
 
-type AbaPainel = 'lancamentos' | 'cartoes';
+type AbaPainel = 'lancamentos' | 'gastos-cartao' | 'cartoes';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
@@ -39,13 +45,21 @@ function App() {
   const [erro, setErro] = useState<string | null>(null);
   const [modalMovimentoOpen, setModalMovimentoOpen] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<AbaPainel>('lancamentos');
+  const [cartaoSelecionado, setCartaoSelecionado] = useState('todos');
+
+  const [cartaoEditando, setCartaoEditando] = useState<Cartao | null>(null);
+  const [novoNomeCartao, setNovoNomeCartao] = useState('');
+  const [modalExcluirCartaoOpen, setModalExcluirCartaoOpen] = useState(false);
+  const [cartaoParaExcluir, setCartaoParaExcluir] = useState<Cartao | null>(null);
+
+  const [modalExcluirTransacaoOpen, setModalExcluirTransacaoOpen] = useState(false);
+  const [transacaoParaExcluir, setTransacaoParaExcluir] = useState<Transacao | null>(null);
 
   const hoje = new Date();
   const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
   const anoAtual = String(hoje.getFullYear());
   const [mesSelecionado, setMesSelecionado] = useState(mesAtual);
   const [anoSelecionado, setAnoSelecionado] = useState(anoAtual);
-  const [cartaoSelecionado, setCartaoSelecionado] = useState('todos');
 
   const carregarTransacoes = async () => {
     try {
@@ -149,6 +163,149 @@ function App() {
       });
   }, [transacoesDoMes, cartaoSelecionado, cartoes]);
 
+  const cartoesTabela = useMemo(
+    () =>
+      cartoes.map((cartao) => ({
+        id: cartao.id,
+        nome: cartao.nome,
+        limite: Number(cartao.limite),
+        fechamento: cartao.fechamento_dia,
+        vencimento: cartao.vencimento_dia,
+        status: cartao.ativo ? 'Ativo' : 'Inativo',
+      })),
+    [cartoes]
+  );
+
+  const abrirEdicaoCartao = (cartao: Cartao) => {
+    setCartaoEditando(cartao);
+    setNovoNomeCartao(cartao.nome);
+    setErro(null);
+  };
+
+  const salvarEdicaoCartao = async () => {
+    if (!cartaoEditando) {
+      return;
+    }
+
+    const nomeNormalizado = novoNomeCartao.trim();
+    if (!nomeNormalizado) {
+      setErro('Nome do cartão é obrigatório.');
+      return;
+    }
+
+    const nomeDuplicado = cartoes.some(
+      (cartao) => cartao.id !== cartaoEditando.id && cartao.nome.toLowerCase() === nomeNormalizado.toLowerCase()
+    );
+
+    if (nomeDuplicado) {
+      setErro('Já existe cartão com esse nome.');
+      return;
+    }
+
+    try {
+      setErro(null);
+      const resposta = await fetch(`${API_BASE_URL}/api/cartoes/${cartaoEditando.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: nomeNormalizado }),
+      });
+
+      const dados = await resposta.json();
+      if (!resposta.ok) {
+        throw new Error(dados?.mensagem || 'Erro ao editar cartão.');
+      }
+
+      setCartaoEditando(null);
+      setNovoNomeCartao('');
+      await carregarTransacoes();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao editar cartão.');
+    }
+  };
+
+  const alterarStatusCartao = async (cartao: Cartao) => {
+    try {
+      setErro(null);
+      const resposta = await fetch(`${API_BASE_URL}/api/cartoes/${cartao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo: !cartao.ativo }),
+      });
+
+      const dados = await resposta.json();
+      if (!resposta.ok) {
+        throw new Error(dados?.mensagem || 'Erro ao atualizar status do cartão.');
+      }
+
+      await carregarTransacoes();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao atualizar status do cartão.');
+    }
+  };
+
+  const excluirCartao = async () => {
+    if (!cartaoParaExcluir) {
+      return;
+    }
+
+    try {
+      setErro(null);
+      const resposta = await fetch(`${API_BASE_URL}/api/cartoes/${cartaoParaExcluir.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!resposta.ok) {
+        const dados = await resposta.json();
+        throw new Error(dados?.mensagem || 'Erro ao excluir cartão.');
+      }
+
+      setModalExcluirCartaoOpen(false);
+      setCartaoParaExcluir(null);
+      await carregarTransacoes();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir cartão.');
+    }
+  };
+
+  const descricaoComParcela = (transacao: Transacao) => {
+    if (transacao.forma_pagamento !== 'CREDITO' || transacao.total_parcelas <= 1 || !transacao.numero_parcela) {
+      return transacao.descricao || 'Sem descrição';
+    }
+
+    const parcelaAtual = String(transacao.numero_parcela).padStart(2, '0');
+    const totalParcelas = String(transacao.total_parcelas).padStart(2, '0');
+    return `${transacao.descricao || 'Sem descrição'} ${parcelaAtual}/${totalParcelas}`;
+  };
+
+  const abrirExcluirTransacao = (transacao: Transacao) => {
+    setTransacaoParaExcluir(transacao);
+    setModalExcluirTransacaoOpen(true);
+  };
+
+  const excluirTransacao = async () => {
+    if (!transacaoParaExcluir) {
+      return;
+    }
+
+    try {
+      setErro(null);
+      const resposta = await fetch(`${API_BASE_URL}/api/transacoes/${transacaoParaExcluir.transacao_id}`, {
+        method: 'DELETE',
+      });
+
+      if (!resposta.ok) {
+        const dados = await resposta.json();
+        throw new Error(dados?.mensagem || 'Erro ao excluir transação.');
+      }
+
+      setModalExcluirTransacaoOpen(false);
+      setTransacaoParaExcluir(null);
+      await carregarTransacoes();
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao excluir transação.');
+    }
+  };
+
   return (
     <main className="dashboard-page">
       <section className="dashboard-header">
@@ -220,10 +377,16 @@ function App() {
               Lançamentos
             </button>
             <button
+              className={`aba-painel ${abaAtiva === 'gastos-cartao' ? 'ativa' : ''}`}
+              onClick={() => setAbaAtiva('gastos-cartao')}
+            >
+              Gastos por cartão
+            </button>
+            <button
               className={`aba-painel ${abaAtiva === 'cartoes' ? 'ativa' : ''}`}
               onClick={() => setAbaAtiva('cartoes')}
             >
-              Gastos por cartão
+              Cartões
             </button>
           </div>
         </div>
@@ -238,21 +401,29 @@ function App() {
               {transacoesDoMes.map((transacao) => (
                 <article key={transacao.id} className="transacao-item">
                   <div>
-                    <p>{transacao.descricao || 'Sem descrição'}</p>
+                    <p>{descricaoComParcela(transacao)}</p>
                     <span>
                       {new Date(`${transacao.data_movimento}T00:00:00`).toLocaleDateString('pt-BR')} •{' '}
                       {transacao.forma_pagamento}
+                      {transacao.forma_pagamento === 'CREDITO' && transacao.cartao_id
+                        ? ` • ${cartoes.find((cartao) => cartao.id === transacao.cartao_id)?.nome || 'Cartão excluído'}`
+                        : ''}
                     </span>
                   </div>
-                  <strong className={transacao.tipo === 'ENTRADA' ? 'valor-entrada' : 'valor-saida'}>
-                    {transacao.tipo === 'ENTRADA' ? '+' : '-'}
-                    {currencyFormatter.format(Number(transacao.valor))}
-                  </strong>
+                  <div className="transacao-item-acoes">
+                    <strong className={transacao.tipo === 'ENTRADA' ? 'valor-entrada' : 'valor-saida'}>
+                      {transacao.tipo === 'ENTRADA' ? '+' : '-'}
+                      {currencyFormatter.format(Number(transacao.valor))}
+                    </strong>
+                    <button className="btn-icon-danger" onClick={() => abrirExcluirTransacao(transacao)}>
+                      🗑️
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>
           )
-        ) : (
+        ) : abaAtiva === 'gastos-cartao' ? (
           <div className="gastos-cartao-painel">
             <div className="gastos-cartao-filtro">
               <label htmlFor="cartao">Cartão</label>
@@ -290,6 +461,54 @@ function App() {
               emptyMessage="Sem gastos de crédito para os filtros selecionados."
             />
           </div>
+        ) : (
+          <StyledGrid
+            columns={[
+              { key: 'nome', label: 'Nome' },
+              { key: 'status', label: 'Status' },
+              {
+                key: 'limite',
+                label: 'Limite',
+                render: (value) => currencyFormatter.format(Number(value)),
+              },
+              { key: 'fechamento', label: 'Fechamento' },
+              { key: 'vencimento', label: 'Vencimento' },
+              {
+                key: 'acoes',
+                label: 'Ações',
+                render: (_, row) => {
+                  const cartao = cartoes.find((item) => item.id === row.id);
+                  if (!cartao) return null;
+
+                  return (
+                    <div className="acoes-cartao-linha">
+                      <button className="btn btn-small" onClick={() => abrirEdicaoCartao(cartao)}>
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-small"
+                        onClick={() => alterarStatusCartao(cartao)}
+                      >
+                        {cartao.ativo ? 'Desativar' : 'Ativar'}
+                      </button>
+                      <button
+                        className="btn btn-danger btn-small"
+                        onClick={() => {
+                          setCartaoParaExcluir(cartao);
+                          setModalExcluirCartaoOpen(true);
+                        }}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  );
+                },
+              },
+            ]}
+            rows={cartoesTabela as (Record<string, string | number> & { id: string | number })[]}
+            getRowId={(row) => row.id}
+            emptyMessage="Nenhum cartão cadastrado."
+          />
         )}
       </section>
 
@@ -305,6 +524,44 @@ function App() {
             setModalMovimentoOpen(false);
           }}
         />
+      </Modal>
+
+      <Modal
+        isOpen={!!cartaoEditando}
+        onClose={() => setCartaoEditando(null)}
+        onSave={salvarEdicaoCartao}
+        title="Editar cartão"
+      >
+        <div className="grupo">
+          <label>Nome do cartão</label>
+          <input
+            type="text"
+            value={novoNomeCartao}
+            onChange={(event) => setNovoNomeCartao(event.target.value)}
+            maxLength={20}
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalExcluirCartaoOpen}
+        onClose={() => setModalExcluirCartaoOpen(false)}
+        onSave={excluirCartao}
+        title="Excluir cartão"
+      >
+        <p>
+          Deseja realmente excluir o cartão <strong>{cartaoParaExcluir?.nome}</strong>? As transações já feitas vão
+          permanecer sem vínculo com cartão.
+        </p>
+      </Modal>
+
+      <Modal
+        isOpen={modalExcluirTransacaoOpen}
+        onClose={() => setModalExcluirTransacaoOpen(false)}
+        onSave={excluirTransacao}
+        title="Excluir transação"
+      >
+        <p>Deseja realmente excluir esta transação?</p>
       </Modal>
     </main>
   );
