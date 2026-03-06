@@ -1,17 +1,264 @@
 #root {
-  max-width: 1280px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: linear-gradient(160deg, #eef2ff 0%, #f8fafc 35%, #f3f4f6 100%);
+}
+
+.dashboard-page {
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.card {
-  padding: 2em;
+.dashboard-header {
+  background: linear-gradient(120deg, #1d4ed8, #1e3a8a);
+  color: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  box-shadow: 0 16px 30px rgba(30, 58, 138, 0.28);
 }
 
-input, select{
-  padding: 4px;
-  font-size: 14px;
-  border-radius: 8px;
+.dashboard-header h1 {
+  margin: 0;
 }
 
+.dashboard-header p {
+  margin: 0.25rem 0 0;
+  opacity: 0.95;
+}
+
+.dashboard-cta {
+  width: auto;
+  min-width: 170px;
+  background: #16a34a;
+}
+
+.dashboard-filtros,
+.transacoes-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.09);
+  border: 1px solid #e2e8f0;
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-filtros {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.resumo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.resumo-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+}
+
+.resumo-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.resumo-card strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.entradas strong {
+  color: #166534;
+}
+
+.gastos strong {
+  color: #b91c1c;
+}
+
+.saldo strong {
+  color: #1e40af;
+}
+
+.transacoes-topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.transacoes-card h2 {
+  margin: 0;
+}
+
+.abas-painel {
+  display: flex;
+  gap: 0.5rem;
+  background: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.25rem;
+}
+
+.aba-painel {
+  border: 0;
+  background: transparent;
+  color: #334155;
+  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aba-painel.ativa {
+  background: #0f172a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+.transacoes-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.8rem;
+}
+
+.transacao-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+.transacao-item p {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.transacao-item span {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.valor-entrada {
+  color: #15803d;
+}
+
+.valor-saida {
+  color: #b91c1c;
+}
+
+.gastos-cartao-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.gastos-cartao-filtro {
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+  gap: 0.35rem;
+}
+
+.gastos-cartao-filtro label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.styled-grid-wrapper {
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.styled-grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  background: #fff;
+}
+
+.styled-grid th {
+  text-align: left;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #475569;
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.styled-grid td {
+  padding: 0.75rem;
+  color: #0f172a;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.styled-grid tbody tr:hover {
+  background: #f8fafc;
+}
+
+.grid-valor-saida {
+  color: #b91c1c;
+}
+
+.grid-empty-message {
+  margin: 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #475569;
+}
+
+@media (max-width: 768px) {
+  .resumo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .transacao-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .abas-painel {
+    width: 100%;
+  }
+
+  .aba-painel {
+    flex: 1;
+  }
+
+  #root {
+    padding: 0.75rem;
+  }
+}
