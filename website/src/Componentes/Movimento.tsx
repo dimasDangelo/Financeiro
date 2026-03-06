@@ -51,6 +51,21 @@ export function Movimento({ onSaved }: MovimentoProps) {
     vencimento: false,
   });
 
+  const formatCurrencyInput = (valor: string) => {
+    const apenasDigitos = valor.replace(/\D/g, "");
+    if (!apenasDigitos) return "";
+
+    return (Number(apenasDigitos) / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const parseCurrencyToNumber = (valor: string) => {
+    const normalizado = valor.replace(/\./g, "").replace(",", ".");
+    return Number(normalizado);
+  };
+
   async function carregarCartoes() {
     try {
       setCarregandoCartoes(true);
@@ -108,7 +123,8 @@ export function Movimento({ onSaved }: MovimentoProps) {
     if (newCard.nome.trim() === "") {
       errorsFound.nome = true;
     }
-    if (Number.isNaN(parseInt(newCard.limite, 10)) || parseInt(newCard.limite, 10) <= 0) {
+    const limiteNumerico = parseCurrencyToNumber(newCard.limite);
+    if (Number.isNaN(limiteNumerico) || limiteNumerico <= 0) {
       errorsFound.limite = true;
     }
     if (
@@ -138,7 +154,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: newCard.nome.trim(),
-          limite: Number(newCard.limite),
+          limite: limiteNumerico,
           fechamento_dia: Number(newCard.fechamento),
           vencimento_dia: Number(newCard.vencimento),
         }),
@@ -162,9 +178,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
   const handlechange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
     if (name === "valor") {
-      if (value === "" || /^\d*(\.\d{0,2})?$/.test(value)) {
-        setInput((prev) => ({ ...prev, [name]: value }));
-      }
+      setInput((prev) => ({ ...prev, valor: formatCurrencyInput(value) }));
       return;
     }
 
@@ -181,7 +195,12 @@ export function Movimento({ onSaved }: MovimentoProps) {
   const handlechangeNewCard = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
-    if (name === "limite" || name === "fechamento" || name === "vencimento") {
+    if (name === "limite") {
+      setNewCard((prev) => ({ ...prev, limite: formatCurrencyInput(value) }));
+      return;
+    }
+
+    if (name === "fechamento" || name === "vencimento") {
       if (!/^\d*$/.test(value)) return;
     }
 
@@ -194,7 +213,10 @@ export function Movimento({ onSaved }: MovimentoProps) {
       setMensagem(null);
 
       if (!input.descricao.trim()) throw new Error("Informe a descrição do movimento.");
-      if (!input.valor || Number(input.valor) <= 0) throw new Error("Informe um valor maior que zero.");
+      const valorNumerico = parseCurrencyToNumber(input.valor);
+      if (!input.valor || Number.isNaN(valorNumerico) || valorNumerico <= 0) {
+        throw new Error("Informe um valor maior que zero.");
+      }
       if (!input.data) throw new Error("Informe a data do movimento.");
       if (formaPagamento === "CREDITO" && !input.cartao) throw new Error("Selecione um cartão.");
 
@@ -210,7 +232,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
         body: JSON.stringify({
           tipo,
           descricao: input.descricao.trim(),
-          valor: Number(input.valor),
+          valor: valorNumerico,
           data_movimento: input.data,
           forma_pagamento: formaPagamento,
           cartao_id: formaPagamento === "CREDITO" ? Number(input.cartao) : null,
@@ -241,7 +263,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
       <div className="grupo">
         <label>Tipo</label>
         <div className="radio-group">
-          <label>
+          <label className={`tipo-tag tipo-tag-entrada ${tipo === "ENTRADA" ? "active" : ""}`}>
             <input
               type="radio"
               value="ENTRADA"
@@ -251,7 +273,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
             Entrada
           </label>
 
-          <label>
+          <label className={`tipo-tag tipo-tag-saida ${tipo === "SAIDA" ? "active" : ""}`}>
             <input
               type="radio"
               value="SAIDA"
@@ -364,8 +386,8 @@ export function Movimento({ onSaved }: MovimentoProps) {
             name="limite"
             value={newCard.limite}
             onChange={handlechangeNewCard}
-            maxLength={7}
-            placeholder="ex: 1000"
+            maxLength={15}
+            placeholder="ex: 1.000,00"
           />
           <FieldError error={inputErrors.limite} msg="Limite deve ser maior que zero" />
         </div>
