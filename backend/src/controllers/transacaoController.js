@@ -198,17 +198,26 @@ async function atualizar(req, res, next) {
 }
 
 async function remover(req, res, next) {
+  const connection = await db.getConnection();
+
   try {
     const { id } = req.params;
 
-    const [result] = await db.query('DELETE FROM transacao WHERE id = ?', [id]);
+    await connection.beginTransaction();
+    await connection.query('DELETE FROM parcela WHERE transacao_id = ?', [id]);
+    const [result] = await connection.query('DELETE FROM transacao WHERE id = ?', [id]);
     if (!result.affectedRows) {
+      await connection.rollback();
       return res.status(404).json({ mensagem: 'Transação não encontrada.' });
     }
 
+    await connection.commit();
     return res.status(204).send();
   } catch (err) {
+    await connection.rollback();
     return next(err);
+  } finally {
+    connection.release();
   }
 }
 

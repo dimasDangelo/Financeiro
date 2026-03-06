@@ -34,10 +34,19 @@ async function criar(req, res, next) {
       });
     }
 
+    const [duplicado] = await db.query(
+      'SELECT id FROM cartao WHERE LOWER(nome) = LOWER(?) LIMIT 1',
+      [nome.trim()]
+    );
+
+    if (duplicado.length) {
+      return res.status(400).json({ mensagem: 'Já existe um cartão com esse nome.' });
+    }
+
     const [result] = await db.query(
       `INSERT INTO cartao (nome, limite, fechamento_dia, vencimento_dia, ativo)
        VALUES (?, ?, ?, ?, ?)`,
-      [nome, limite, fechamento_dia, vencimento_dia, ativo]
+      [nome.trim(), limite, fechamento_dia, vencimento_dia, ativo]
     );
 
     const [rows] = await db.query('SELECT * FROM cartao WHERE id = ?', [result.insertId]);
@@ -57,6 +66,17 @@ async function atualizar(req, res, next) {
       return res.status(404).json({ mensagem: 'Cartão não encontrado.' });
     }
 
+    if (nome) {
+      const [duplicado] = await db.query(
+        'SELECT id FROM cartao WHERE LOWER(nome) = LOWER(?) AND id <> ?',
+        [nome.trim(), id]
+      );
+
+      if (duplicado.length) {
+        return res.status(400).json({ mensagem: 'Já existe um cartão com esse nome.' });
+      }
+    }
+
     await db.query(
       `UPDATE cartao
        SET nome = COALESCE(?, nome),
@@ -65,7 +85,7 @@ async function atualizar(req, res, next) {
            vencimento_dia = COALESCE(?, vencimento_dia),
            ativo = COALESCE(?, ativo)
        WHERE id = ?`,
-      [nome, limite, fechamento_dia, vencimento_dia, ativo, id]
+      [nome?.trim(), limite, fechamento_dia, vencimento_dia, ativo, id]
     );
 
     const [rows] = await db.query('SELECT * FROM cartao WHERE id = ?', [id]);
@@ -78,6 +98,8 @@ async function atualizar(req, res, next) {
 async function remover(req, res, next) {
   try {
     const { id } = req.params;
+
+    await db.query('UPDATE transacao SET cartao_id = NULL WHERE cartao_id = ?', [id]);
 
     const [result] = await db.query('DELETE FROM cartao WHERE id = ?', [id]);
     if (!result.affectedRows) {

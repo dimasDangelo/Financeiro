@@ -9,6 +9,7 @@ type TipoMovimento = "ENTRADA" | "SAIDA";
 type Cartao = {
   id: number;
   nome: string;
+  ativo: boolean;
 };
 
 const API_BASE_URL =
@@ -88,7 +89,10 @@ export function Movimento({ onSaved }: MovimentoProps) {
   }, []);
 
   const optionsCard = useMemo(
-    () => cartoes.map((card) => ({ value: String(card.id), label: card.nome })),
+    () =>
+      cartoes
+        .filter((card) => card.ativo)
+        .map((card) => ({ value: String(card.id), label: card.nome })),
     [cartoes]
   );
 
@@ -112,6 +116,7 @@ export function Movimento({ onSaved }: MovimentoProps) {
 
   const validateInputsCard = async () => {
     resetInputErrors();
+    setErro(null);
 
     const errorsFound = {
       nome: false,
@@ -122,6 +127,15 @@ export function Movimento({ onSaved }: MovimentoProps) {
 
     if (newCard.nome.trim() === "") {
       errorsFound.nome = true;
+    }
+
+    const nomeDuplicado = cartoes.some(
+      (card) => card.nome.trim().toLowerCase() === newCard.nome.trim().toLowerCase()
+    );
+
+    if (nomeDuplicado) {
+      errorsFound.nome = true;
+      setErro("Já existe um cartão com esse nome.");
     }
     const limiteNumerico = parseCurrencyToNumber(newCard.limite);
     if (Number.isNaN(limiteNumerico) || limiteNumerico <= 0) {
