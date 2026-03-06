@@ -28,6 +28,22 @@ select {
   gap: 16px;
 }
 
+.tipo-opcao {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.tipo-opcao-entrada {
+  background: #dcfce7;
+  border-color: #16a34a;
+}
+
+.tipo-opcao-saida {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
 .credito-box {
   display: grid;
   grid-template-columns: 1fr 1fr;
